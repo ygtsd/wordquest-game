@@ -573,10 +573,10 @@ function GamesScreen({ student, unit, onBack, onPick }) {
   const data = CURRICULUM[student];
   const games = [
     { id: "memory", title: "Hafıza Eşleştirme", desc: "Kelime ve anlamını eşleştir", emoji: "🧠", color: "#A78BFA", time: "75 sn" },
-    { id: "quiz", title: "Hızlı Quiz", desc: "İngilizce → Türkçe çevir", emoji: "⚡", color: "#FBBF24", time: "10 sn / soru" },
-    { id: "fill", title: "Boşluk Doldur", desc: "Cümleyi tamamla", emoji: "✏️", color: "#F472B6", time: "15 sn / soru" },
-    { id: "anagram", title: "Harf Dizme", desc: "Karışık harfleri düzelt", emoji: "🔤", color: "#60A5FA", time: "20 sn / soru" },
-    { id: "hunt", title: "Kelime Avı", desc: "Türkçeden İngilizceyi yaz", emoji: "🎯", color: "#34D399", time: "20 sn / soru" },
+    { id: "quiz", title: "Hızlı Quiz", desc: "İngilizce → Türkçe çevir", emoji: "⚡", color: "#FBBF24", time: "Süresiz" },
+    { id: "fill", title: "Boşluk Doldur", desc: "Cümleyi tamamla", emoji: "✏️", color: "#F472B6", time: "Süresiz" },
+    { id: "anagram", title: "Harf Dizme", desc: "Karışık harfleri düzelt", emoji: "🔤", color: "#60A5FA", time: "Süresiz" },
+    { id: "hunt", title: "Kelime Avı", desc: "Türkçeden İngilizceyi yaz", emoji: "🎯", color: "#34D399", time: "Süresiz" },
   ];
 
   return (
@@ -742,27 +742,15 @@ function QuizGame({ student, unit, onEnd, onQuit }) {
   const [score, setScore] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [selected, setSelected] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(10);
   const [shake, setShake] = useState(false);
   const [wrongList, setWrongList] = useState([]);
   const endedRef = useRef(false);
 
   useEffect(() => {
-    setTimeLeft(10);
     setSelected(null);
     // Yeni soru gelince İngilizce kelimeyi oku
     if (!endedRef.current) speak(questions[idx].q);
   }, [idx]);
-
-  useEffect(() => {
-    if (selected !== null || endedRef.current) return;
-    if (timeLeft <= 0) {
-      handleAnswer(null);
-      return;
-    }
-    const t = setTimeout(() => setTimeLeft((v) => v - 1), 1000);
-    return () => clearTimeout(t);
-  }, [timeLeft, selected]);
 
   const handleAnswer = (opt) => {
     if (selected !== null || endedRef.current) return;
@@ -771,7 +759,7 @@ function QuizGame({ student, unit, onEnd, onQuit }) {
     const isCorrect = opt === q.a;
     let newWrongList = wrongList;
     if (isCorrect) {
-      const points = 10 + timeLeft * 2;
+      const points = 10;
       setScore((s) => s + points);
       setCorrect((c) => c + 1);
     } else {
@@ -783,7 +771,7 @@ function QuizGame({ student, unit, onEnd, onQuit }) {
     setTimeout(() => {
       if (idx + 1 >= questions.length) {
         endedRef.current = true;
-        onEnd(score + (isCorrect ? 10 + timeLeft * 2 : 0), correct + (isCorrect ? 1 : 0), questions.length, newWrongList);
+        onEnd(score + (isCorrect ? 10 : 0), correct + (isCorrect ? 1 : 0), questions.length, newWrongList);
       } else {
         setIdx((i) => i + 1);
       }
@@ -796,7 +784,7 @@ function QuizGame({ student, unit, onEnd, onQuit }) {
   return (
     <div className="min-h-screen p-4" style={{ background: CURRICULUM[student].accent }}>
       <div className="max-w-xl mx-auto">
-        <GameHeader title={unit.title} subtitle={`⚡ Quiz · Soru ${idx + 1}/${questions.length}`} timeLeft={timeLeft} onQuit={onQuit} color={color} maxTime={10} />
+        <GameHeader title={unit.title} subtitle={`⚡ Quiz · Soru ${idx + 1}/${questions.length}`} onQuit={onQuit} color={color} />
 
         <div className="h-2 bg-white rounded-full mb-6 overflow-hidden">
           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: color }} />
@@ -863,25 +851,13 @@ function FillGame({ student, unit, onEnd, onQuit }) {
   const [score, setScore] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [selected, setSelected] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(15);
   const [shake, setShake] = useState(false);
   const [wrongList, setWrongList] = useState([]);
   const endedRef = useRef(false);
 
   useEffect(() => {
-    setTimeLeft(15);
     setSelected(null);
   }, [idx]);
-
-  useEffect(() => {
-    if (selected !== null || endedRef.current) return;
-    if (timeLeft <= 0) {
-      handleAnswer(null);
-      return;
-    }
-    const t = setTimeout(() => setTimeLeft((v) => v - 1), 1000);
-    return () => clearTimeout(t);
-  }, [timeLeft, selected]);
 
   const handleAnswer = (opt) => {
     if (selected !== null || endedRef.current) return;
@@ -890,10 +866,9 @@ function FillGame({ student, unit, onEnd, onQuit }) {
     const isCorrect = opt === q.a;
     let newWrongList = wrongList;
     if (isCorrect) {
-      const points = 15 + timeLeft * 2;
+      const points = 15;
       setScore((s) => s + points);
       setCorrect((c) => c + 1);
-      // Tamamlanmış cümleyi oku
       speak(q.q.replace("___", q.a));
     } else {
       newWrongList = [...wrongList, { en: q.a, tr: q.q.replace("___", `[${q.a}]`) }];
@@ -904,7 +879,7 @@ function FillGame({ student, unit, onEnd, onQuit }) {
     setTimeout(() => {
       if (idx + 1 >= questions.length) {
         endedRef.current = true;
-        onEnd(score + (isCorrect ? 15 + timeLeft * 2 : 0), correct + (isCorrect ? 1 : 0), questions.length, newWrongList);
+        onEnd(score + (isCorrect ? 15 : 0), correct + (isCorrect ? 1 : 0), questions.length, newWrongList);
       } else {
         setIdx((i) => i + 1);
       }
@@ -918,7 +893,7 @@ function FillGame({ student, unit, onEnd, onQuit }) {
   return (
     <div className="min-h-screen p-4" style={{ background: CURRICULUM[student].accent }}>
       <div className="max-w-xl mx-auto">
-        <GameHeader title={unit.title} subtitle={`✏️ Boşluk Doldur · ${idx + 1}/${questions.length}`} timeLeft={timeLeft} onQuit={onQuit} color={color} maxTime={15} />
+        <GameHeader title={unit.title} subtitle={`✏️ Boşluk Doldur · ${idx + 1}/${questions.length}`} onQuit={onQuit} color={color} />
 
         <div className="h-2 bg-white rounded-full mb-6 overflow-hidden">
           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: color }} />
@@ -991,29 +966,17 @@ function AnagramGame({ student, unit, onEnd, onQuit }) {
   const [idx, setIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [correct, setCorrect] = useState(0);
-  const [picked, setPicked] = useState([]); // indices from available letters
+  const [picked, setPicked] = useState([]);
   const [available, setAvailable] = useState([]);
-  const [result, setResult] = useState(null); // "right" | "wrong" | null
-  const [timeLeft, setTimeLeft] = useState(20);
+  const [result, setResult] = useState(null);
   const [wrongList, setWrongList] = useState([]);
   const endedRef = useRef(false);
 
   useEffect(() => {
-    setTimeLeft(20);
     setPicked([]);
     setAvailable(questions[idx].shuffled.split("").map((l, i) => ({ l, i })));
     setResult(null);
   }, [idx]);
-
-  useEffect(() => {
-    if (result !== null || endedRef.current) return;
-    if (timeLeft <= 0) {
-      finish(false);
-      return;
-    }
-    const t = setTimeout(() => setTimeLeft((v) => v - 1), 1000);
-    return () => clearTimeout(t);
-  }, [timeLeft, result]);
 
   const pickLetter = (letter) => {
     if (result !== null) return;
@@ -1046,7 +1009,7 @@ function AnagramGame({ student, unit, onEnd, onQuit }) {
     let newCorrect = correct;
     let newWrongList = wrongList;
     if (isCorrect) {
-      const points = 15 + timeLeft * 2;
+      const points = 15;
       newScore = score + points;
       newCorrect = correct + 1;
       setScore(newScore);
@@ -1072,7 +1035,7 @@ function AnagramGame({ student, unit, onEnd, onQuit }) {
   return (
     <div className="min-h-screen p-4" style={{ background: CURRICULUM[student].accent }}>
       <div className="max-w-xl mx-auto">
-        <GameHeader title={unit.title} subtitle={`🔤 Harf Dizme · ${idx + 1}/${questions.length}`} timeLeft={timeLeft} onQuit={onQuit} color={color} maxTime={20} />
+        <GameHeader title={unit.title} subtitle={`🔤 Harf Dizme · ${idx + 1}/${questions.length}`} onQuit={onQuit} color={color} />
 
         <div className="h-2 bg-white rounded-full mb-6 overflow-hidden">
           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: color }} />
@@ -1159,32 +1122,20 @@ function HuntGame({ student, unit, onEnd, onQuit }) {
   const [score, setScore] = useState(0);
   const [correct, setCorrect] = useState(0);
   const [input, setInput] = useState("");
-  const [result, setResult] = useState(null); // "right" | "wrong" | "close" | null
-  const [timeLeft, setTimeLeft] = useState(20);
+  const [result, setResult] = useState(null);
   const [hintUsed, setHintUsed] = useState(false);
   const [wrongList, setWrongList] = useState([]);
   const endedRef = useRef(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
-    setTimeLeft(20);
     setInput("");
     setResult(null);
     setHintUsed(false);
     setTimeout(() => inputRef.current?.focus(), 50);
   }, [idx]);
 
-  useEffect(() => {
-    if (result !== null || endedRef.current) return;
-    if (timeLeft <= 0) {
-      submit(true);
-      return;
-    }
-    const t = setTimeout(() => setTimeLeft((v) => v - 1), 1000);
-    return () => clearTimeout(t);
-  }, [timeLeft, result]);
-
-  const submit = (timeout = false) => {
+  const submit = () => {
     if (result !== null || endedRef.current) return;
     const q = questions[idx];
     const guess = input.trim().toLowerCase();
@@ -1192,7 +1143,7 @@ function HuntGame({ student, unit, onEnd, onQuit }) {
 
     let outcome;
     if (guess === answer) outcome = "right";
-    else if (guess.length > 0 && levenshtein(guess, answer) <= 1 && !timeout) outcome = "close";
+    else if (guess.length > 0 && levenshtein(guess, answer) <= 1) outcome = "close";
     else outcome = "wrong";
 
     setResult(outcome);
@@ -1201,8 +1152,7 @@ function HuntGame({ student, unit, onEnd, onQuit }) {
     let newWrongList = wrongList;
     if (outcome === "right") {
       const base = hintUsed ? 8 : 15;
-      const points = base + timeLeft * 2;
-      newScore = score + points;
+      newScore = score + base;
       newCorrect = correct + 1;
       setScore(newScore);
       setCorrect(newCorrect);
@@ -1244,7 +1194,7 @@ function HuntGame({ student, unit, onEnd, onQuit }) {
   return (
     <div className="min-h-screen p-4" style={{ background: CURRICULUM[student].accent }}>
       <div className="max-w-xl mx-auto">
-        <GameHeader title={unit.title} subtitle={`🎯 Kelime Avı · ${idx + 1}/${questions.length}`} timeLeft={timeLeft} onQuit={onQuit} color={color} maxTime={20} />
+        <GameHeader title={unit.title} subtitle={`🎯 Kelime Avı · ${idx + 1}/${questions.length}`} onQuit={onQuit} color={color} />
 
         <div className="h-2 bg-white rounded-full mb-6 overflow-hidden">
           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${progress}%`, background: color }} />
@@ -1341,8 +1291,9 @@ function levenshtein(a, b) {
 
 // ============ OYUN BAŞLIĞI (Timer) ============
 function GameHeader({ title, subtitle, timeLeft, onQuit, color, maxTime = 60 }) {
-  const pct = Math.max(0, (timeLeft / maxTime) * 100);
-  const isLow = timeLeft <= 5;
+  const hasTimer = timeLeft !== undefined && timeLeft !== null;
+  const pct = hasTimer ? Math.max(0, (timeLeft / maxTime) * 100) : 0;
+  const isLow = hasTimer && timeLeft <= 5;
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-3">
@@ -1354,16 +1305,18 @@ function GameHeader({ title, subtitle, timeLeft, onQuit, color, maxTime = 60 }) 
           <div className="display-font text-lg" style={{ color: "#2D3047" }}>{title}</div>
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold ${isLow ? "shake" : ""}`}
-          style={{ background: isLow ? "#FEE2E2" : "white", color: isLow ? "#DC2626" : color }}>
-          <Clock size={16} />
-          {timeLeft}s
+      {hasTimer && (
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold ${isLow ? "shake" : ""}`}
+            style={{ background: isLow ? "#FEE2E2" : "white", color: isLow ? "#DC2626" : color }}>
+            <Clock size={16} />
+            {timeLeft}s
+          </div>
+          <div className="flex-1 h-3 bg-white rounded-full overflow-hidden shadow-inner">
+            <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: isLow ? "#DC2626" : color }} />
+          </div>
         </div>
-        <div className="flex-1 h-3 bg-white rounded-full overflow-hidden shadow-inner">
-          <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${pct}%`, background: isLow ? "#DC2626" : color }} />
-        </div>
-      </div>
+      )}
     </div>
   );
 }
